@@ -17,7 +17,22 @@ Your name is Jaana.`;
 export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isCompatible, setIsCompatible] = useState(true);
   const [transcript, setTranscript] = useState("");
+
+  useEffect(() => {
+    const checkCompatibility = () => {
+      const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+      const hasAudioContext = !!(window.AudioContext || (window as any).webkitAudioContext);
+      
+      if (!hasMediaDevices || !hasAudioContext) {
+        setIsCompatible(false);
+        setError("Your browser or device doesn't support the required voice features. Please use a modern browser like Chrome or Safari on HTTPS.");
+      }
+    };
+    checkCompatibility();
+  }, []);
   const [aiResponse, setAiResponse] = useState("");
   const [isMuted, setIsMuted] = useState(false);
   const [visualizerData, setVisualizerData] = useState<number[]>(new Array(20).fill(10));
@@ -29,6 +44,7 @@ export default function App() {
 
   const startSession = useCallback(async () => {
     try {
+      setError(null);
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
       
       playerRef.current = new AudioPlayer();
@@ -39,6 +55,14 @@ export default function App() {
           });
         }
       });
+
+      // Request microphone access explicitly to catch errors early
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        setError("Microphone access denied. Please check your browser permissions.");
+        return;
+      }
 
       const session = await ai.live.connect({
         model: "gemini-3.1-flash-live-preview",
@@ -105,6 +129,7 @@ export default function App() {
           },
           onerror: (err) => {
             console.error("Live session error:", err);
+            setError("Connection error. Please try again.");
             setIsConnected(false);
             setIsListening(false);
           },
@@ -192,10 +217,38 @@ export default function App() {
           ))}
         </div>
 
-        {/* Transcript/Status */}
+        {/* Transcript/Status/Error */}
         <div className="w-full bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 mb-8 min-h-[120px] flex flex-col justify-center">
           <AnimatePresence mode="wait">
-            {!isListening ? (
+            {!isCompatible ? (
+              <motion.div
+                key="incompatible"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center space-y-2"
+              >
+                <p className="text-yellow-500 font-medium">Device Incompatible</p>
+                <p className="text-gray-400 text-sm">{error}</p>
+              </motion.div>
+            ) : error ? (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center space-y-2"
+              >
+                <p className="text-red-400 font-medium">Oops! Something went wrong</p>
+                <p className="text-gray-400 text-sm">{error}</p>
+                <button 
+                  onClick={() => setError(null)}
+                  className="text-xs text-blue-400 underline mt-2"
+                >
+                  Dismiss
+                </button>
+              </motion.div>
+            ) : !isListening ? (
               <motion.p
                 key="idle"
                 initial={{ opacity: 0 }}
