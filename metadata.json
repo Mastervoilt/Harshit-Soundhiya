@@ -1,0 +1,5 @@
+{
+  "name": "Jaana AI Assistant",
+  "description": "A Siri-like AI assistant with real-time voice interaction, web search, and WhatsApp integration.",
+  "requestFramePermissions": ["microphone"]
+}
