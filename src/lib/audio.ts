@@ -33,7 +33,9 @@ export class AudioRecorder {
     this.processor?.disconnect();
     this.source?.disconnect();
     this.stream?.getTracks().forEach(track => track.stop());
-    this.audioContext?.close();
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      this.audioContext.close();
+    }
   }
 
   private floatTo16BitPCM(input: Float32Array) {
@@ -97,7 +99,9 @@ export class AudioPlayer {
   }
 
   stop() {
-    this.audioContext?.close();
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      this.audioContext.close();
+    }
     this.audioContext = new AudioContext({ sampleRate: 24000 });
     this.nextStartTime = 0;
   }

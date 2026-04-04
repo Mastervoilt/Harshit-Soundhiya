@@ -177,7 +177,10 @@ export default function App() {
   }, [isListening]);
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-black overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-[#050505] overflow-hidden">
+      {/* Mesh Background */}
+      <div className="bg-mesh opacity-50" />
+      
       {/* Background Siri Orb */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className={cn(
